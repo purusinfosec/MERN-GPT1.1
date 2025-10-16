@@ -1,60 +1,28 @@
 import express from "express";
-import { config } from "dotenv";
-import morgan from "morgan";
-import cookieParser from "cookie-parser";
 import cors from "cors";
-import appRouter from "./routes/index.js";
+import dotenv from "dotenv";
+import userRoutes from "./routes/user-routes.js";
+import { connectToDatabase } from "./db/connection.js";
 
-config();
+dotenv.config();
 
 const app = express();
 
-// ==========================
-// 🔹 CORS Configuration
-// ==========================
-const allowedOrigins = [
-  "http://localhost:5173",                   // Local dev (Vite)
-  "https://mern-gpt-1-1-prefinal.vercel.app" // Deployed frontend
-];
+// ✅ CORS middleware
+app.use(cors({ origin: "https://your-frontend.vercel.app" }));
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like curl, Postman)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
-
-// ==========================
-// 🔹 Core Middlewares
-// ==========================
+// Body parser
 app.use(express.json());
-app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// ==========================
-// 🔹 Logger (only in development)
-// ==========================
-if (process.env.NODE_ENV !== "production") {
-  app.use(morgan("dev"));
-}
+// Routes
+app.use("/api/v1/user", userRoutes);
 
-// ==========================
-// 🔹 Main API Route
-// ==========================
-app.use("/api/v1", appRouter);
-
-// ==========================
-// 🔹 Root Health Check (optional)
-// ==========================
+// Health check
 app.get("/", (req, res) => {
-  res.status(200).json({ message: "Server is running successfully ✅" });
+  res.json({ message: "Backend is running!" });
 });
+
+// Connect to DB
+connectToDatabase();
 
 export default app;
